@@ -20,13 +20,14 @@ void do_service(int conn)
     {
         memset(recvbuf, 0, sizeof(recvbuf));
         int ret = read(conn,recvbuf,sizeof(recvbuf));
+        // printf("ret=%d\n",ret);
         if(ret == 0)    //当返回0表示客户端关闭了
         {
             printf("client close\n");
             break;//退出函数，关闭该通信
-        }else
+        }else if(ret == -1)
         {
-            ERR_EXIT("read");
+           ERR_EXIT("read");
         }
         
         fputs(recvbuf,stdout);
@@ -63,7 +64,7 @@ int main(void)
             ERR_EXIT("accept");
         //将ip地址转换成点分十进制的ip地址
         printf("ip=%s,port=%d\n",inet_ntoa(peeraddr.sin_addr),ntohs(peeraddr.sin_port));
-        //当接受到一个连接，fork一个进程
+        //当接收到一个连接，fork一个进程
         pid = fork();   //多进程
         if(pid == -1)
             ERR_EXIT("fork");
@@ -72,7 +73,7 @@ int main(void)
             //子进程不需要处理监听，将监听套接口关闭
             close(listenfd);
             do_service(conn);
-            exit(EXIT_SUCCESS);//退出子进程
+            exit(EXIT_SUCCESS);//当客户端返回时，为客户端开辟的子进程应该退出，退出子进程
         }else
         {
             //父进程不需要处理连接，关闭连接套接口
